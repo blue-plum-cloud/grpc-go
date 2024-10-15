@@ -1,4 +1,4 @@
-module google.golang.org/grpc
+module github.com/blue-plum-cloud/grpc-go
 
 go 1.21
 
