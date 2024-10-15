@@ -33,6 +33,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	perf "github.com/blue-plum-cloud/go-cpu-monitoring/perf-api"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding"
@@ -85,6 +87,10 @@ func init() {
 
 var statusOK = status.New(codes.OK, "")
 var logger = grpclog.Component("core")
+
+// configure perf
+var peConfig, strs = perf.SetupPerf(true)
+var group_fd = perf.ConfigPerf(&peConfig, 1)
 
 type methodHandler func(srv any, ctx context.Context, dec func(any) error, interceptor UnaryServerInterceptor) (any, error)
 
@@ -924,6 +930,8 @@ func (s *Server) Serve(lis net.Listener) error {
 		// s.conns before this conn can be added.
 		s.serveWG.Add(1)
 		go func() {
+			// start instrumentation
+			perf.StartInstrumentation(group_fd)
 			s.handleRawConn(lis.Addr().String(), rawConn)
 			s.serveWG.Done()
 		}()
@@ -1027,6 +1035,7 @@ func (s *Server) serveStreams(ctx context.Context, st transport.ServerTransport,
 			defer streamQuota.release()
 			defer s.handlersWG.Done()
 			s.handleStream(st, stream)
+			perf.EndInstrumentation(group_fd, strs, &peConfig, len(peConfig.Configs))
 		}
 
 		if s.opts.numServerWorkers > 0 {
