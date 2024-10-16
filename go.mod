@@ -1,7 +1,8 @@
-module github.com/blue-plum-cloud/grpc-go
+module grpc
 
 go 1.21
 
+replace google.golang.org/grpc => ./
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cncf/xds/go v0.0.0-20240423153145-555b57ec207b
